@@ -7,9 +7,17 @@ import "hardhat/console.sol";
 contract WavePortal {
 
     uint256 totalWaves;
-    mapping(address => uint256) addressToWaveCount;
     address maxWaverAddress;
-    uint256 maxWaveCount;
+
+    event NewWave(address indexed from, uint256 timestamp, string message);
+
+    struct Wave {
+        address waver; // The address of the user who waved.
+        string message; // The message the user sent.
+        uint256 timestamp; // The timestamp when the user waved.
+    }
+    Wave[] waves;
+    mapping(address => Wave[]) addressToWaves;
 
     constructor() {
         console.log("Logging from WavePortal constructor by %s", msg.sender);
@@ -17,18 +25,22 @@ contract WavePortal {
     
     }
 
-    function wave() public {
+    function wave(string memory _message) public {
         totalWaves += 1;
-        console.log("%s has waved!", msg.sender);
+        console.log("%s has waved! with a message %s", msg.sender, _message);
 
-        addressToWaveCount[msg.sender] += 1;
 
-        if (msg.sender == maxWaverAddress) {
-            maxWaveCount += 1;
-        } else if (addressToWaveCount[msg.sender] > maxWaveCount) {
+        Wave memory newWave = Wave(msg.sender, _message, block.timestamp);
+
+        waves.push(newWave);
+        addressToWaves[msg.sender].push(newWave);
+
+
+        if (addressToWaves[msg.sender].length > addressToWaves[maxWaverAddress].length) {
             maxWaverAddress = msg.sender;
-            maxWaveCount = addressToWaveCount[msg.sender];
         }
+
+        emit NewWave(newWave.waver, newWave.timestamp, newWave.message);
     }
 
     function getTotalWaves() public view returns (uint256) {
@@ -36,26 +48,40 @@ contract WavePortal {
         return totalWaves;
     }
 
+    function getAllWaves() public view returns (Wave[] memory) {
+        return waves;
+    }
+
+    function getAllWavesByAddress(address _address) public view returns (Wave[] memory) {
+        return addressToWaves[_address];
+    }
+
+    function getAllWavesByCaller() public view returns (Wave[] memory) {
+        return addressToWaves[msg.sender];
+    }
+
+    
+
     function getHeighestWaver() public view returns (address) {
         console.log("%s waved the most", maxWaverAddress);
         return maxWaverAddress;
     }
 
     function getMaxIndividualWave() public view returns (uint256) {
-        console.log("The most wave is %d total waves!", maxWaveCount);
+        console.log("The most wave is %d total waves!", addressToWaves[maxWaverAddress].length);
 
-        return maxWaveCount;
+        return addressToWaves[maxWaverAddress].length;
     }
 
-    // function getWaveCount(address _address) public view returns (uint256) {
-    //     console.log("The most wave by %s is %d total waves!", _address, addressToWaveCount[_address]);
+    function getWaveCountByAddress(address _address) public view returns (uint256) {
+        console.log("The most wave by %s is %d total waves!", _address, addressToWaves[_address].length);
 
-    //     return addressToWaveCount[_address];
-    // }
+        return addressToWaves[_address].length;
+    }
 
-    function getWaveCount() public view returns (uint256) {
-        console.log("The most wave by %s is %d total waves!", msg.sender, addressToWaveCount[msg.sender]);
+    function getWaveCountByCaller() public view returns (uint256) {
+        console.log("The most wave by %s is %d total waves!", msg.sender, addressToWaves[msg.sender].length);
 
-        return addressToWaveCount[msg.sender];
+        return addressToWaves[msg.sender].length;
     }
 }

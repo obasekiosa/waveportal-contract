@@ -10,14 +10,19 @@ const main = async () => {
 
     let waveCount;
     waveCount = await waveContract.getTotalWaves();
+    console.log(waveCount.toNumber());
 
-    let waveTxn = await waveContract.wave();
-    await waveTxn.wait();
+    /**
+     * Let's send a few waves!
+     */
+    let waveTxn = await waveContract.wave("A message!");
+    await waveTxn.wait(); // Wait for the transaction to be mined
 
-    waveCount = await waveContract.getTotalWaves();
+    waveTxn = await waveContract.connect(randomPerson).wave("Another message!");
+    await waveTxn.wait(); // Wait for the transaction to be mined
 
-    waveTxn = await waveContract.connect(randomPerson).wave();
-    await waveTxn.wait();
+    let allWaves = await waveContract.getAllWaves();
+    console.log(allWaves);
 
     waveCount = await waveContract.getTotalWaves();
 
@@ -25,9 +30,14 @@ const main = async () => {
 
     let maxIndividualWave = await waveContract.getMaxIndividualWave();
 
-    let count = await waveContract.getWaveCount();
+    let count = await waveContract.getWaveCountByCaller();
 
-    // let countRandomPerson = await waveContract.getWaveCount(randomPerson);
+    let countRandomPerson = await waveContract.getWaveCountByAddress(randomPerson.address);
+
+    let ownerWaves = await waveContract.getAllWavesByAddress(owner.address);
+    console.log(ownerWaves);
+    let randomPersonWaves = await waveContract.getAllWavesByAddress(randomPerson.address);
+    console.log(randomPersonWaves);
 };
 
 const runMain = async () => {
